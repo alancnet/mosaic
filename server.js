@@ -3,8 +3,10 @@ var express = require('express'),
     port = process.env.PORT || 1337;
 
 
-app.get('/', function(req, res) {
+app.get('/test', function(req, res) {
     res.send('Hello World :)');
 })
+
+app.use(express.static('./www'));
 
 app.listen(port);
