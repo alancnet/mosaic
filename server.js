@@ -5,7 +5,8 @@ var express = require('express'),
     passport = require('passport'),
     TwitterStrategy = require('passport-twitter').Strategy,
     config = require('./config'),
-    app = express();
+    app = express(),
+    twitter = require('./twitter');
 
 // App configure
 {
