@@ -18,11 +18,3 @@ function compileHeader(obj) {
 function nonce() {
     return process.pid.toString(36) + new Date().getTime().toString(36) + (count++).toString(36);
 }
-
-function twitter() {
-    return compileHeader({
-        oauth_consumer_key: config.twitterApiKey,
-        oauth_nonce: nonce(),
-        oauth_signature:
-    })
-}
