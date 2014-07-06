@@ -1,0 +1,88 @@
+<html>
+    <body>
+    </body>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/q.js/1.0.1/q.js"></script>
+        <script>
+            var running = false;
+            function doStream() {
+                var deferred = Q.defer();
+                function internal() {
+                    if (running) throw new Error("Already running");
+                    running = true;
+                    var count = 0;
+                    var xhr = new XMLHttpRequest();
+                            window.res = xhr;
+                    xhr.open('GET', '/stream', true);
+                    xhr.responseType = "text";
+                    xhr.lastLength = 0;
+                    xhr.onreadystatechange = function() {
+                        if (xhr.readyState == XMLHttpRequest.DONE) {
+                            deferred.resolve();
+                            
+                        } else if (xhr.readyState == XMLHttpRequest.LOADING) {
+                            var chunk = xhr.responseText.substr(xhr.lastLength);
+                            xhr.lastLength = xhr.responseText.length;
+                            deferred.notify(chunk);
+                        }
+                        count++;
+                        if (count == 1000) {
+                            if (!running) {
+                                throw new Error("Not running");
+                            }
+                            running = false;
+                            xhr.abort();
+                            console.log("resetting %o", xhr.readyState);
+                            internal();
+                        }
+                    };
+                    xhr.send();
+                    console.log('sent');
+                }
+                internal();
+                return deferred.promise;
+            }
+            
+            function parseStream(promise) {
+                var deferred = Q.defer();
+                var current = '';
+                promise.then(function() {
+                    deferred.resolve();
+                }, function(err) {
+                    deferred.reject(err);
+                }, function(chunk) {
+                    current += chunk;
+                    for (var i; (i = current.indexOf('\n')) != -1;) {
+                        var segment = current.substr(0, i);
+                        current = current.substr(i + 1);
+                        deferred.notify(segment);
+                    }
+                });
+                
+                return deferred.promise;
+            }
+
+            
+            function doTheThing() {
+                parseStream(doStream()).then(
+                    function() {
+                        console.log('done');
+                    },
+                    function(err) {
+                        console.error(err);
+                    },
+                    function(json) {
+                        var media = JSON.parse(json);
+                        $('<img />')
+                        .attr('src', media.media_url + ":thumb")
+                        .prependTo('body');
+                        
+                        while (document.body.children.length > 200) {
+                            document.body.removeChild(document.body.children[document.body.children.length - 1]);
+                        }
+                    }
+                )
+            }
+            doTheThing();
+        </script>
+</html>
